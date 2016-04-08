@@ -4,6 +4,7 @@
 #include "directories.h"
 #include "menu.h"
 #include "config.h"
+#include "python_interpreter.h"
 
 int Application::on_command_line(const Glib::RefPtr<Gio::ApplicationCommandLine> &cmd) {
   Glib::set_prgname("juci");
@@ -112,6 +113,7 @@ void Application::on_startup() {
     set_app_menu(Menu::get().juci_menu);
     set_menubar(Menu::get().window_menu);
   }
+  PythonInterpreter::get();
 }
 
 Application::Application() : Gtk::Application("no.sout.juci", Gio::APPLICATION_NON_UNIQUE | Gio::APPLICATION_HANDLES_COMMAND_LINE) {

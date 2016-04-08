@@ -26,6 +26,23 @@ PythonInterpreter::PythonInterpreter(){
   PyImport_AppendInittab("jucipp", init_juci_api);
   Py_Initialize();
   Config::get().load();
+
+  auto plugin_path=Config::get().python.plugin_directory;
+  add_path(Config::get().python.site_packages);
+  add_path(plugin_path);
+
+  boost::filesystem::directory_iterator end_it;
+  for(boost::filesystem::directory_iterator it(plugin_path);it!=end_it;it++){
+    auto module_name=it->path().stem().string();
+    if(module_name!="__pycache__"){
+      auto module=import(module_name);
+      if(!module){
+        auto err=PythonError();
+        if(err)
+          std::cerr << std::string(err) << std::endl;
+      }
+    }
+  }
 }
 
 pybind11::module PythonInterpreter::get_loaded_module(const std::string &module_name){
