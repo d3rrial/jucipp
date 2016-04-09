@@ -22,6 +22,7 @@ public:
   
   Glib::RefPtr<Gio::Menu> juci_menu;
   Glib::RefPtr<Gio::Menu> window_menu;
+  Glib::RefPtr<Gio::Menu> plugin_menu;
   
 private:
   Glib::RefPtr<Gtk::Builder> builder;

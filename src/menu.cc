@@ -3,7 +3,7 @@
 #include <string>
 #include <iostream>
 
-Menu::Menu() {
+Menu::Menu() : plugin_menu(nullptr){
   ui_xml = R"RAW(
 <interface>
   <menu id='juci-menu'>
