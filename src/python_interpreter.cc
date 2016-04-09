@@ -14,6 +14,14 @@ inline pybind11::module pyobject_from_gobj(gpointer ptr){
 }
 
 Python::Interpreter::Interpreter(){
+#ifdef _WIN32
+  auto root_path=Config::get().terminal.msys2_mingw_path;
+  append_path(root_path/"include/python3.5m");
+  append_path(root_path/"lib/python3.5");
+  long long unsigned size = 0L;
+#else
+  long unsigned size = 0L;
+#endif
   auto init_juci_api=[](){
     pybind11::module(pygobject_init(-1,-1,-1),false);
     pybind11::module api("jucpp","Python bindings for juCi++");
@@ -52,6 +60,8 @@ Python::Interpreter::Interpreter(){
   add_path(Config::get().python.site_packages);
   add_path(plugin_path);
   Py_Initialize();
+  argv=Py_DecodeLocale("",&size);
+  PySys_SetArgv(0,&argv);
   boost::filesystem::directory_iterator end_it;
   for(boost::filesystem::directory_iterator it(plugin_path);it!=end_it;it++){
     auto module_name=it->path().stem().string();
@@ -72,6 +82,8 @@ pybind11::module Python::Interpreter::import(const std::string &module_name){
 }
 
 void Python::Interpreter::add_path(const boost::filesystem::path &path){
+  if(path.empty())
+    return;
   std::wstring sys_path(Py_GetPath());
   if(!sys_path.empty())
 #ifdef _WIN32
