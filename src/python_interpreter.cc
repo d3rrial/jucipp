@@ -13,7 +13,7 @@ inline pybind11::module pyobject_from_gobj(gpointer ptr){
   return pybind11::module(Py_None, false);
 }
 
-PythonInterpreter::PythonInterpreter(){
+Python::Interpreter::Interpreter(){
   auto init_juci_api=[](){
     pybind11::module(pygobject_init(-1,-1,-1),false);
     pybind11::module api("jucpp","Python bindings for juCi++");
@@ -58,20 +58,20 @@ PythonInterpreter::PythonInterpreter(){
     if(module_name!="__pycache__"){
       auto module=import(module_name);
       if(!module)
-        std::cerr << std::string(PythonError()) << std::endl;
+        std::cerr << std::string(Error()) << std::endl;
     }
   }
 }
 
-pybind11::module PythonInterpreter::get_loaded_module(const std::string &module_name){
+pybind11::module Python::Interpreter::get_loaded_module(const std::string &module_name){
   return pybind11::module(PyImport_AddModule(module_name.c_str()), true);
 }
 
-pybind11::module PythonInterpreter::import(const std::string &module_name){
+pybind11::module Python::Interpreter::import(const std::string &module_name){
   return pybind11::module(PyImport_ImportModule(module_name.c_str()), false);
 }
 
-void PythonInterpreter::add_path(const boost::filesystem::path &path){
+void Python::Interpreter::add_path(const boost::filesystem::path &path){
   std::wstring sys_path(Py_GetPath());
   if(!sys_path.empty())
 #ifdef _WIN32
@@ -83,15 +83,15 @@ void PythonInterpreter::add_path(const boost::filesystem::path &path){
   Py_SetPath(sys_path.c_str());
 }
 
-PythonInterpreter::~PythonInterpreter(){
-  auto err=PythonError();
+Python::Interpreter::~Interpreter(){
+  auto err=Error();
   if(Py_IsInitialized())
     Py_Finalize();
   if(err)
     std::cerr << std::string(err) << std::endl;
 }
 
-PythonError::PythonError(){
+Python::Error::Error(){
   pybind11::object error(PyErr_Occurred(), false);
   if(error){
     PyObject *exception,*value,*traceback;
@@ -107,10 +107,10 @@ PythonError::PythonError(){
   }
 }
 
-PythonError::operator std::string(){
+Python::Error::operator std::string(){
   return exp + "\n" + val + "\n" + trace;
 }
 
-PythonError::operator bool(){
+Python::Error::operator bool(){
   return !exp.empty();
 }

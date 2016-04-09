@@ -113,7 +113,7 @@ void Application::on_startup() {
     set_app_menu(Menu::get().juci_menu);
     set_menubar(Menu::get().window_menu);
   }
-  PythonInterpreter::get();
+  Python::Interpreter::get();
 }
 
 Application::Application() : Gtk::Application("no.sout.juci", Gio::APPLICATION_NON_UNIQUE | Gio::APPLICATION_HANDLES_COMMAND_LINE) {
