@@ -67,18 +67,26 @@ Python::Interpreter::Interpreter(){
     auto module_name=it->path().stem().string();
     if(module_name!="__pycache__"){
       auto module=import(module_name);
-      if(!module)
-        std::cerr << std::string(Error()) << std::endl;
+      if(!module){
+        auto err=std::string(Error());
+        auto msg="Error loading plugin "+module_name+":\n";
+        Terminal::get().print(msg,true);
+        Terminal::get().print(err+"\n");
+      }
     }
   }
 }
 
-pybind11::module Python::Interpreter::get_loaded_module(const std::string &module_name){
+pybind11::module Python::get_loaded_module(const std::string &module_name){
   return pybind11::module(PyImport_AddModule(module_name.c_str()), true);
 }
 
-pybind11::module Python::Interpreter::import(const std::string &module_name){
+pybind11::module Python::import(const std::string &module_name){
   return pybind11::module(PyImport_ImportModule(module_name.c_str()), false);
+}
+
+pybind11::module Python::reload(pybind11::module &module){
+  return pybind11::module(PyImport_ReloadModule(module.ptr()),false);
 }
 
 void Python::Interpreter::add_path(const boost::filesystem::path &path){
@@ -103,26 +111,54 @@ Python::Interpreter::~Interpreter(){
     std::cerr << std::string(err) << std::endl;
 }
 
+pybind11::object Python::error_occured(){
+  return pybind11::object(PyErr_Occurred(),true);
+}
+
+bool Python::thrown_exception_matches(Error::Type type){
+  pybind11::object compare;
+  switch(type){
+    case Error::Type::Syntax : compare=pybind11::object(PyExc_SyntaxError,false);
+    case Error::Type::Attribute : compare=pybind11::object(PyExc_AttributeError,false);
+    case Error::Type::Import : compare=pybind11::object(PyExc_ImportError,false);
+  }
+  return PyErr_GivenExceptionMatches(Python::error_occured().ptr(), compare.ptr());
+}
+
 Python::Error::Error(){
-  pybind11::object error(PyErr_Occurred(), false);
-  if(error){
-    PyObject *exception,*value,*traceback;
-    PyErr_Fetch(&exception,&value,&traceback);
-    PyErr_NormalizeException(&exception,&value,&traceback);
+  if(error_occured()){
     try{
-      exp=std::string(pybind11::object(exception,false).str());
-      val=std::string(pybind11::object(value,false).str());
-      trace=std::string(pybind11::object(traceback,false).str());
-    } catch (const std::runtime_error &e){
-      exp=e.what();
+      PyErr_Fetch(&exp.ptr(),&val.ptr(),&trace.ptr());
+      PyErr_NormalizeException(&exp.ptr(),&val.ptr(),&trace.ptr());
+    }catch(const std::exception &e) {
+      Terminal::get().print(e.what());
     }
   }
 }
 
 Python::Error::operator std::string(){
-  return exp + "\n" + val + "\n" + trace;
+  return std::string(exp.str())+"\n"+std::string(val.str())+"\n";
+}
+
+Python::SyntaxError::SyntaxError():Error(){
+  if(val){
+    _Py_IDENTIFIER(msg);
+    _Py_IDENTIFIER(lineno);
+    _Py_IDENTIFIER(offset);
+    _Py_IDENTIFIER(text);
+    exp=std::string(pybind11::str(_PyObject_GetAttrId(val.ptr(),&PyId_msg),false));
+    text=std::string(pybind11::str(_PyObject_GetAttrId(val.ptr(),&PyId_text),false));
+    pybind11::object py_line_number(_PyObject_GetAttrId(val.ptr(),&PyId_lineno),false);
+    pybind11::object py_line_offset(_PyObject_GetAttrId(val.ptr(),&PyId_offset),false);
+    line_number=pybind11::cast<int>(py_line_number);
+    line_offset=pybind11::cast<int>(py_line_offset);
+  }
+}
+
+Python::SyntaxError::operator std::string(){
+  return exp+" ("+std::to_string(line_number)+":"+std::to_string(line_offset)+"):\n"+text;
 }
 
 Python::Error::operator bool(){
-  return !exp.empty();
+  return exp;
 }
