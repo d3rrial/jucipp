@@ -29,21 +29,23 @@ class Python {
   class Error {
   public:
     Error();
+    Error(pybind11::object type,pybind11::object value,pybind11::object traceback);
     operator std::string();
     operator bool();
     pybind11::object exp, val, trace;
-    enum Type {Syntax,Attribute,Import};
   };
 
-  class SyntaxError : Error{
+  class SyntaxError : public Error{
   public:
     SyntaxError();
+    SyntaxError(pybind11::object type,pybind11::object value,pybind11::object traceback);
     operator std::string();
     std::string exp, text;
     int line_number, line_offset;
   };
 
-  bool static thrown_exception_matches(Error::Type exception_type);
+  bool static thrown_exception_matches(pybind11::handle exception_type);
+  bool static given_exception_matches(const pybind11::object &exception,pybind11::handle exception_type);
 
 private:
   pybind11::object static error_occured();

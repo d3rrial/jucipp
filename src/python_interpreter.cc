@@ -62,16 +62,23 @@ Python::Interpreter::Interpreter(){
   Py_Initialize();
   argv=Py_DecodeLocale("",&size);
   PySys_SetArgv(0,&argv);
+  auto sys=get_loaded_module("sys");
+  auto exc_func=[](pybind11::object type,pybind11::object value,pybind11::object traceback){
+    if(!given_exception_matches(type,PyExc_SyntaxError))
+      Terminal::get().print(Error(type,value,traceback),true);
+    else
+      Terminal::get().print(SyntaxError(type,value,traceback),true);
+  };
+  sys.attr("excepthook")=pybind11::cpp_function(exc_func);
   boost::filesystem::directory_iterator end_it;
   for(boost::filesystem::directory_iterator it(plugin_path);it!=end_it;it++){
     auto module_name=it->path().stem().string();
     if(module_name!="__pycache__"){
       auto module=import(module_name);
       if(!module){
+        auto msg="Error loading plugin `"+module_name+"`:\n";
         auto err=std::string(Error());
-        auto msg="Error loading plugin "+module_name+":\n";
-        Terminal::get().print(msg,true);
-        Terminal::get().print(err+"\n");
+        Terminal::get().print(msg+err+"\n");
       }
     }
   }
@@ -87,6 +94,15 @@ pybind11::module Python::import(const std::string &module_name){
 
 pybind11::module Python::reload(pybind11::module &module){
   return pybind11::module(PyImport_ReloadModule(module.ptr()),false);
+}
+
+Python::SyntaxError::SyntaxError(pybind11::object type,pybind11::object value,pybind11::object traceback)
+: Error(type,value,traceback){}
+
+Python::Error::Error(pybind11::object type,pybind11::object value,pybind11::object traceback){
+  exp=type;
+  val=value;
+  trace=traceback;
 }
 
 void Python::Interpreter::add_path(const boost::filesystem::path &path){
@@ -115,14 +131,12 @@ pybind11::object Python::error_occured(){
   return pybind11::object(PyErr_Occurred(),true);
 }
 
-bool Python::thrown_exception_matches(Error::Type type){
-  pybind11::object compare;
-  switch(type){
-    case Error::Type::Syntax : compare=pybind11::object(PyExc_SyntaxError,false);
-    case Error::Type::Attribute : compare=pybind11::object(PyExc_AttributeError,false);
-    case Error::Type::Import : compare=pybind11::object(PyExc_ImportError,false);
-  }
-  return PyErr_GivenExceptionMatches(Python::error_occured().ptr(), compare.ptr());
+bool Python::thrown_exception_matches(pybind11::handle exception_type){
+  return PyErr_ExceptionMatches(exception_type.ptr());
+}
+
+bool Python::given_exception_matches(const pybind11::object &exception, pybind11::handle exception_type){
+  return PyErr_GivenExceptionMatches(exception.ptr(),exception_type.ptr());
 }
 
 Python::Error::Error(){
@@ -131,7 +145,7 @@ Python::Error::Error(){
       PyErr_Fetch(&exp.ptr(),&val.ptr(),&trace.ptr());
       PyErr_NormalizeException(&exp.ptr(),&val.ptr(),&trace.ptr());
     }catch(const std::exception &e) {
-      Terminal::get().print(e.what());
+      Terminal::get().print(e.what(),true);
     }
   }
 }
@@ -160,5 +174,5 @@ Python::SyntaxError::operator std::string(){
 }
 
 Python::Error::operator bool(){
-  return exp;
+  return exp || trace || val;
 }
