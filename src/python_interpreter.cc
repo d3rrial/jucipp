@@ -83,7 +83,12 @@ Python::Interpreter::Interpreter(){
   boost::filesystem::directory_iterator end_it;
   for(boost::filesystem::directory_iterator it(plugin_path);it!=end_it;it++){
     auto module_name=it->path().stem().string();
-    if(module_name!="__pycache__"){
+    if(module_name.empty())
+      break;
+    auto is_directory=boost::filesystem::is_directory(it->path());
+    auto has_py_extension=it->path().extension()==".py";
+    auto is_pycache=module_name=="__pycache__";
+    if((is_directory && !is_pycache)||has_py_extension){
       auto module=import(module_name);
       if(!module){
         auto msg="Error loading plugin `"+module_name+"`:\n";
