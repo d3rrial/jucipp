@@ -25,14 +25,24 @@ Python::Interpreter::Interpreter(){
   auto init_juci_api=[](){
     pybind11::module(pygobject_init(-1,-1,-1),false);
     pybind11::module api("jucpp","Python bindings for juCi++");
-    api.def("get_juci_home",[](){return Config::get().juci_home_path().string();})
-    .def("get_plugin_folder",[](){return Config::get().python.plugin_directory;})
-    .def("get_current_gtk_source_view",[](){
-      auto view=Notebook::get().get_current_view();
-      if(view)
-        return pyobject_from_gobj(view->gobj());
-      return pybind11::module(Py_None,false);
-    })
+    api
+    .def("get_juci_home",[](){return Config::get().juci_home_path().string();})
+    .def("get_plugin_folder",[](){return Config::get().python.plugin_directory;});
+    api
+    .def_submodule("editor")
+      .def("get_current_gtk_source_view",[](){
+        auto view=Notebook::get().get_current_view();
+        if(view)
+          return pyobject_from_gobj(view->gobj());
+        return pybind11::module(Py_None,false);
+      })
+      .def("get_file_path",[](){
+        auto view=Notebook::get().get_current_view();
+        if(view)
+          return view->file_path.string();
+        return std::string();
+      });
+    api
     .def("get_gio_plugin_menu",[](){
       auto &plugin_menu=Menu::get().plugin_menu;
       if(!plugin_menu){
