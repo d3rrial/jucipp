@@ -27,8 +27,8 @@ inline pybind11::module pyobject_from_gobj(gpointer ptr){
 Python::Interpreter::Interpreter(){
 #ifdef _WIN32
   auto root_path=Config::get().terminal.msys2_mingw_path;
-  append_path(root_path/"include/python3.5m");
-  append_path(root_path/"lib/python3.5");
+  add_path(root_path/"include/python3.5m");
+  add_path(root_path/"lib/python3.5");
   long long unsigned size = 0L;
 #else
   long unsigned size = 0L;
@@ -95,7 +95,7 @@ Python::Interpreter::Interpreter(){
   for(boost::filesystem::directory_iterator it(plugin_path);it!=end_it;it++){
     auto module_name=it->path().stem().string();
     if(module_name.empty())
-      break;
+      continue;
     auto is_directory=boost::filesystem::is_directory(it->path());
     auto has_py_extension=it->path().extension()==".py";
     auto is_pycache=module_name=="__pycache__";
