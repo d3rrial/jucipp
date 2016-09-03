@@ -78,7 +78,7 @@ set(project_shared_files
     ../libclangmm/src/Tokens.cc
     ../libclangmm/src/TranslationUnit.cc
     ../libclangmm/src/Utility.cc
-
+    
     ../tiny-process-library/process.cpp
 )
 

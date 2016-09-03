@@ -77,7 +77,7 @@ public:
     
     std::unordered_map<std::string, DocumentationSearch> documentation_searches;
   };
-  
+
   class Python {
   public:
     std::string site_packages;

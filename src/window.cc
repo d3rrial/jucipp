@@ -1,6 +1,7 @@
 #include "window.h"
 #include "config.h"
 #include "menu.h"
+#include "notebook.h"
 #include "directories.h"
 #include "python_interpreter.h"
 #include "dialogs.h"
@@ -144,7 +145,7 @@ Window::Window() {
 #endif
     EntryBox::get().hide();
   };
-
+  
   signal_focus_out_event().connect([](GdkEventFocus *event) {
     if(auto view=Notebook::get().get_current_view()) {
       view->hide_tooltips();
@@ -558,7 +559,7 @@ void Window::set_menu_actions() {
   menu.add_action("source_find_documentation", [this]() {
     if(auto view=Notebook::get().get_current_view()) {
       if(view->get_token_data) {
-        auto data=view->get_token_data();
+        auto data=view->get_token_data();        
         if(data.size()>0) {
           auto documentation_search=Config::get().source.documentation_searches.find(data[0]);
           if(documentation_search!=Config::get().source.documentation_searches.end()) {
@@ -694,7 +695,7 @@ void Window::set_menu_actions() {
             row+=std::to_string(usage.first.line+1)+": "+usage.second;
             (*rows)[row]=usage.first;
             view->selection_dialog->add_row(row);
-
+            
             //Set dialog cursor to the last row if the textview cursor is at the same line
             if(current_page &&
                iter.get_line()==static_cast<int>(usage.first.line) && iter.get_line_index()>=static_cast<int>(usage.first.index)) {
@@ -853,7 +854,7 @@ void Window::set_menu_actions() {
       Info::get().print("Compile or debug in progress");
       return;
     }
-
+    
     Project::current=Project::create();
     
     if(Config::get().project.save_on_compile_or_run)
@@ -866,7 +867,7 @@ void Window::set_menu_actions() {
       Info::get().print("Compile or debug in progress");
       return;
     }
-
+    
     Project::current=Project::create();
     
     if(Config::get().project.save_on_compile_or_run)
@@ -940,7 +941,7 @@ void Window::set_menu_actions() {
     }, 50);
     auto entry_it=EntryBox::get().entries.begin();
     entry_it->set_placeholder_text("Debug: Set Run Arguments");
-
+    
     if(auto options=project->debug_get_options()) {
       EntryBox::get().buttons.emplace_back("", [this, options]() {
         options->set_visible(true);
@@ -950,7 +951,7 @@ void Window::set_menu_actions() {
       EntryBox::get().buttons.back().set_tooltip_text("Additional Options");
       options->set_relative_to(EntryBox::get().buttons.back());
     }
-
+    
     EntryBox::get().buttons.emplace_back("Debug: set run arguments", [this, entry_it](){
       entry_it->activate();
     });
@@ -1068,7 +1069,7 @@ void Window::set_menu_actions() {
       else {
         Notebook::get().status.set_text("");
         Notebook::get().info.set_text("");
-
+        
         activate_menu_items(false);
       }
     }
