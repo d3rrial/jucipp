@@ -56,6 +56,7 @@ Window::Window() {
   
   auto info_and_status_hbox=Gtk::manage(new Gtk::HBox());
   info_and_status_hbox->pack_start(Notebook::get().info, Gtk::PACK_SHRINK);
+  info_and_status_hbox->pack_start(Notebook::get().path_label, Gtk::PACK_SHRINK);
   info_and_status_hbox->set_center_widget(Project::debug_status_label());
   info_and_status_hbox->pack_end(Notebook::get().status, Gtk::PACK_SHRINK);
   
@@ -124,6 +125,7 @@ Window::Window() {
     
     view->set_status(view->status);
     view->set_info(view->info);
+    view->set_path_label(view->file_path.generic_string());
     
 #ifdef JUCI_ENABLE_DEBUG
     if(Project::debugging)

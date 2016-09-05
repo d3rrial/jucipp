@@ -86,8 +86,10 @@ namespace Source {
     
     std::function<void(View* view, const std::string &status_text)> on_update_status;
     std::function<void(View* view, const std::string &info_text)> on_update_info;
+    std::function<void(View* view, const std::string &path_label_text)> on_update_path_label;
     void set_status(const std::string &status);
     void set_info(const std::string &info);
+    void set_path_label(const std::string &path_label);
     std::string status;
     std::string info;
     

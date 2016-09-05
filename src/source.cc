@@ -863,6 +863,11 @@ void Source::View::set_info(const std::string &info) {
     on_update_info(this, positions+" "+info);
 }
 
+void Source::View::set_path_label(const std::string &path_label){
+  if(on_update_path_label)
+    on_update_path_label(this, path_label);
+}
+
 std::string Source::View::get_line(const Gtk::TextIter &iter) {
   auto line_start_it = get_buffer()->get_iter_at_line(iter.get_line());
   auto line_end_it = get_iter_at_line_end(iter.get_line());

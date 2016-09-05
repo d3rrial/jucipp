@@ -178,6 +178,10 @@ void Notebook::open(const boost::filesystem::path &file_path, size_t notebook_in
     if(get_current_view()==view)
       info.set_text(" "+info_text);
   };
+  source_views.back()->on_update_path_label=[this](Source::View* view, const std::string &path_label_text) {
+    if(get_current_view()==view)
+      path_label.set_text(" "+path_label_text+" ");
+  };
   
   scrolled_windows.emplace_back(new Gtk::ScrolledWindow());
   hboxes.emplace_back(new Gtk::HBox());

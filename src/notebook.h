@@ -44,6 +44,7 @@ public:
 
   Gtk::Label info;
   Gtk::Label status;
+  Gtk::Label path_label;
   
   std::function<void(Source::View*)> on_change_page;
   std::function<void(Source::View*)> on_close_page;
